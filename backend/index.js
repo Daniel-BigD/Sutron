@@ -1,6 +1,5 @@
 const app = require('express')();
 const server = require('http').createServer(app);
-const io_server = require('socket.io')(server);
 const net = require('net');
 const bodyParser = require('body-parser');
 
@@ -26,25 +25,27 @@ app.post('/message', (req, res) => {
     const client = net.createConnection({ port: devicePORT, host: deviceHOST }, () => {
         console.log('Connected');
 
-        client.write('M1', 'utf8', () => {
+        client.write('!M1\r ', 'utf8', () => {
             console.log('wrote status to server');
         });
 
         res.json({ deviceHOST, devicePORT, connected: true });
-        client.end();
     });
 
+    let str = '';
+
     client.on('data', data => {
-        console.log(data);
+        str += data;
     });
 
     client.on('error', e => {
         console.error(e);
     });
-});
 
-io_server.on('connection', () => {
-    console.log('CONNECTED TO CLIENT ON TCP/IP SERVER!');
+    setTimeout(() => {// Can console.log result with the 'done' event, though for demo purposes
+        console.log(str);
+        client.end();
+    }, 10000)
 });
 
 server.listen(PORT, () => {
